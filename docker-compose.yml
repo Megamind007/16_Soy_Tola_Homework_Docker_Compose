@@ -1,5 +1,6 @@
 version: '3.8'
 services:
+  #  database
   db:
     image: postgres:latest  #imagename:tagname
     container_name: db_container  #container name
@@ -12,6 +13,8 @@ services:
     volumes:
       - tola_volume:/var/lib/postgresql/data
 
+
+  # api
   app:
     build: .
     image: app_img:latest #imagename:tagname
@@ -24,5 +27,56 @@ services:
       - "8081:8080"
     depends_on:
       - db
+
+  # rabbitMQ
+  rabbit:
+    image: lucifer8591/rabbitmq-server:3.7.17
+    hostname: rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-tola}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-123}
+
+  #keycloack
+  keycloak_web:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: keycloak_web
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
+      KC_DB_USERNAME: tola
+      KC_DB_PASSWORD: 123
+
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: tola
+      KEYCLOAK_ADMIN_PASSWORD: 123
+    command: start-dev
+    depends_on:
+      - keycloakdb
+    ports:
+      - 8080:8080 # http
+      - 8443:8443 # https
+
+  keycloakdb:
+    image: postgres:latest
+    volumes:
+      - cloak_volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: tola
+      POSTGRES_PASSWORD: 123
 volumes:
   tola_volume:
+  cloak_volume:
+
+
+
