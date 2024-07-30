@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:latest  #imagename:tagname
+    container_name: db_container  #container name
+    environment:
+      POSTGRES_DB: my_db
+      POSTGRES_USER: tola
+      POSTGRES_PASSWORD: 123
+    ports:
+      - "5433:5432"
+    volumes:
+      - tola_volume:/var/lib/postgresql/data
+
+  app:
+    build: .
+    image: app_img:latest #imagename:tagname
+    container_name: app_container #container name
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/my_db
+      SPRING_DATASOURCE_USERNAME: tola
+      SPRING_DATASOURCE_PASSWORD: 123
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+volumes:
+  tola_volume:
